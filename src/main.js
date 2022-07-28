@@ -5,20 +5,25 @@ import App from './App';
 import router from './router';
 import axios from './plugins/axios';
 
+import VuePlyr from 'vue-plyr'
+import 'vue-plyr/dist/vue-plyr.css'
+
 import 'vuetify/dist/vuetify.min.css';
 import 'font-awesome/css/font-awesome.css';
-
 import Vuetify from 'vuetify';
 
-import 'material-design-icons-iconfont/dist/material-design-icons.css';
-import './styles/global.css';
 
-import VueChartkick from 'vue-chartkick';
-import Chart from 'chart.js';
-import fullCalendar from 'vue-fullcalendar';
 import { setupComponents } from './config/setup-components';
 import store from './store'
 import { setupAndGetI18n } from './config/setup-i18n';
+
+axios.interceptors.request.use((config)=>{
+  const token = localStorage.getItem('token')
+  if (token) config.headers.common['Authorization'] = `Bearer ${token}`
+  return config
+}, error =>{
+  return Promise.reject(error)
+})
 
 Vue.prototype.$http = axios;
 Vue.prototype.$store = store;
@@ -28,13 +33,13 @@ const i18n = setupAndGetI18n(Vue);
 import swatches from 'vue-swatches';
 import "vue-swatches/dist/vue-swatches.min.css"
 
-Vue.use(VueChartkick, { adapter: Chart });
-Vue.component('full-calendar', fullCalendar);
-Vue.component('swatches', swatches);
 
 setupComponents(Vue);
 
 Vue.use(Vuetify);
+Vue.use(VuePlyr, {
+  plyr: {}
+})
 
 Vue.config.productionTip = false
 
@@ -48,8 +53,8 @@ new Vue({
   template: '<App/>',
   data: {
     themeColor: '#1e73be',
-    useremail: 'admin@yopmail.com',
-    userPassword: '123456'
+    useremail: 'arthur.dent@zz9.co.uk',
+    userPassword: 'Start123$'
   },
 
   methods: {

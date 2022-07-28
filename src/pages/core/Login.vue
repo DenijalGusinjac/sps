@@ -7,8 +7,7 @@
             <v-card class="elevation-1 pa-3">
               <v-card-text>
                 <div class="layout column align-center">
-                  <img src="static/logo.png" alt="Vue Material Admin" width="180" height="180">
-                  <h1 class="flex my-4 primary--text">Vue Admin Template</h1>
+
                 </div>
                 <v-form>
                   <v-text-field
@@ -56,8 +55,8 @@ export default {
     return {
       loading: false,
       form: {
-username: 'admin@yopmail.com',
-      password: '123456',
+      username: 'arthur.dent@zz9.co.uk',
+      password: 'Start123$',
       },
       
       hidePassword: true,

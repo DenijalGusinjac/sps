@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-
 import Dashboard from '../pages/Dashboard.vue';
 import Login from '../pages/core/Login.vue';
 import Error from '../pages/core/Error.vue';
@@ -14,6 +13,14 @@ export default new Router({
       path: '/dashboard',
       name: 'Dashboard',
       component: Dashboard,
+      beforeEnter:(to, from, next)=>{
+        if(!localStorage.getItem('token')){
+          return next({
+            path: '/'
+          })
+        }
+        next()
+      },
       meta: {
         breadcrumb: [
           { name: 'dashboard' }

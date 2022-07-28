@@ -1,112 +1,119 @@
 <template>
-  <v-data-table
-    class="table"
-    :headers="headers"
-    :items="users"
-    :rows-per-page-items="[10, 25]">
-    <template slot="items" slot-scope="props">
-      <td class="text-xs-left">
-        <v-avatar size="42">
-          <img :src="randomAvatar()" alt="avatar">
-        </v-avatar>
-      </td>
-      <td class="text-xs-left">{{ props.item.name }}</td>
-      <td class="text-xs-left">{{ props.item.username }}</td>
-      <td class="text-xs-left">{{ props.item.email }}</td>
-      <td class="text-xs-left">{{ props.item.phone }}</td>
-      <td class="text-xs-left">{{ props.item.company.name }}</td>
-      <td class="text-xs-left">{{ props.item.website }}</td>
-      <!-- <td class="text-xs-left">{{ props.item.address.city }}</td> -->
-    </template>
-  </v-data-table>
+  <v-card>
+    <v-card-title>
+      <v-text-field
+        v-model="search"
+        append-icon="mdi-magnify"
+        label="Search"
+        single-line
+        hide-details
+      ></v-text-field>
+    </v-card-title>
+    <v-data-table
+      class="table"
+      v-if="data"
+      :headers="headers"
+      :items="data"
+      :rows-per-page-items="[10, 25]"
+      :search="search"
+    >
+      <template slot="items" slot-scope="props">
+        <td class="text-xs-left">{{ props.item.title }}</td>
+        <td class="text-xs-left">{{ convertMsToMin(props.item.length) }}</td>
+        <td class="text-xs-left">{{ convertDate(props.item.createdAt) }}</td>
+        <td class="text-xs-left">
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="downloadData(props.item.uuid, props.item.title)"
+            >Download</v-btn
+          >
+        </td>
+        <td class="text-xs-left">
+          <vue-plyr>
+            <audio controls crossorigin playsinline>
+              <source :src="playAudio(props.item.uuid)" type="audio/mpeg" />
+            </audio>
+          </vue-plyr>
+        </td>
+      </template>
+    </v-data-table>
+  </v-card>
 </template>
 
 <script>
-
-const avatars = [
-  'https://avataaars.io/?accessoriesType=Blank&avatarStyle=Circle&clotheColor=PastelGreen&clotheType=ShirtScoopNeck&eyeType=Wink&eyebrowType=UnibrowNatural&facialHairColor=Black&facialHairType=MoustacheMagnum&hairColor=Platinum&mouthType=Concerned&skinColor=Tanned&topType=Turban',
-  'https://avataaars.io/?accessoriesType=Sunglasses&avatarStyle=Circle&clotheColor=Gray02&clotheType=ShirtScoopNeck&eyeType=EyeRoll&eyebrowType=RaisedExcited&facialHairColor=Red&facialHairType=BeardMagestic&hairColor=Red&hatColor=White&mouthType=Twinkle&skinColor=DarkBrown&topType=LongHairBun',
-  'https://avataaars.io/?accessoriesType=Prescription02&avatarStyle=Circle&clotheColor=Black&clotheType=ShirtVNeck&eyeType=Surprised&eyebrowType=Angry&facialHairColor=Blonde&facialHairType=Blank&hairColor=Blonde&hatColor=PastelOrange&mouthType=Smile&skinColor=Black&topType=LongHairNotTooLong',
-  'https://avataaars.io/?accessoriesType=Round&avatarStyle=Circle&clotheColor=PastelOrange&clotheType=Overall&eyeType=Close&eyebrowType=AngryNatural&facialHairColor=Blonde&facialHairType=Blank&graphicType=Pizza&hairColor=Black&hatColor=PastelBlue&mouthType=Serious&skinColor=Light&topType=LongHairBigHair',
-  'https://avataaars.io/?accessoriesType=Kurt&avatarStyle=Circle&clotheColor=Gray01&clotheType=BlazerShirt&eyeType=Surprised&eyebrowType=Default&facialHairColor=Red&facialHairType=Blank&graphicType=Selena&hairColor=Red&hatColor=Blue02&mouthType=Twinkle&skinColor=Pale&topType=LongHairCurly',
-  'https://avataaars.io/?'
-];
+import axios from "../plugins/axios";
+import { converter } from "@/mixins/global";
 
 export default {
   data() {
     return {
-      users: [],
+      data: null,
+      search: "",
       headers: [
         {
-          value: 'Avatar',
-          align: 'left',
-          sortable: false
+          text: "Title",
+          value: "title",
+          align: "left",
+          sortable: true,
         },
         {
-          text: 'Name',
-          value: 'Name',
-          align: 'left',
-          sortable: true
+          text: "Length",
+          value: "length",
+          align: "left",
+          sortable: true,
         },
         {
-          text: 'User Name',
-          value: 'Username',
-          align: 'left',
-          sortable: true
+          text: "Created At",
+          value: "createdAt",
+          align: "left",
+          sortable: true,
         },
         {
-          text: 'Email',
-          value: 'Email',
-          align: 'left',
-          sortable: true
+          text: "Actions",
+          align: "left",
+          sortable: false,
         },
-        {
-          text: 'Phone',
-          value: 'Phone',
-          align: 'left',
-          sortable: true
-        },
-        {
-          text: 'Company',
-          value: 'Company',
-          align: 'left',
-          sortable: true
-        },
-        {
-          text: 'Website',
-          value: 'Website',
-          align: 'left',
-          sortable: true
-        }
-      ]
-    }
+      ],
+    };
   },
-
+  mixins: [converter],
   methods: {
-    randomAvatar () {
+    async loadData() {
+      try {
+        await this.$store.dispatch("voiceMemos");
+        this.data = this.$store.getters["voiceMemos"];
+      } catch (error) {}
+    },
 
-      return avatars[Math.floor(Math.random() * avatars.length)];
-    }
+    async downloadData(id, title) {
+      await this.$store.dispatch("download", { id, title });
+    },
+    playAudio(id) {
+      const response = axios.get(`voice-memos/${id}/download`, {
+        responseType: "blob",
+      });
+
+      return window.URL.createObjectURL(new Blob([response.data]));
+    },
   },
 
-  created() {
-    const vm = this;
-
-    vm.axios.get('https://jsonplaceholder.typicode.com/users').then(response => {
-      var result = response && response.data;
-
-      vm.users = result;
-    });
-  }
-}
+  mounted() {
+    this.loadData();
+  },
+};
 </script>
 
 <style>
-  .table {
-    border-radius: 3px;
-    background-clip: border-box;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.21);
-    background-color: transparent;
-  }
+.table {
+  border-radius: 3px;
+  background-clip: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.21);
+  background-color: transparent;
+}
+.flex.d-flex.lg8.sm6.xs12{
+  max-width:100%;
+  flex-basis:100%;
+}
 </style>
